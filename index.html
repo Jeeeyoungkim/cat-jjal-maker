@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>고양이 가라사대</title>
+</head>
+<style>
+  body {
+    text-align: center;
+  }
+
+  .main-card button {
+    position: relative;
+    left: -45px;
+    bottom: 15px;
+  }
+
+  .favorites {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .favorites img {}
+</style>
+
+<body>
+
+  <div id="app"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script type="text/babel">
+    const jsonLocalStorage = {
+      setItem: (key, value) => {
+        localStorage.setItem(key, JSON.stringify(value));
+      },
+      getItem: (key) => {
+        return JSON.parse(localStorage.getItem(key));
+      },
+    };
+
+    console.log("야옹");
+
+    const Title = (props) => {
+      return (
+        <h1>{props.children}</h1>
+      )
+    }
+
+    const Form = ({ updateMaincat }) => {
+      const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text); //한글 있는지 검증
+      const [value, setValue] = React.useState(''); //기본값은 ''
+      const [errorMessage, setErrorMessage] = React.useState('');
+
+      function handleInputChange(e) {
+        const userValue = e.target.value;
+        console.log(includesHangul(userValue));
+
+        if (includesHangul(userValue)) {
+          setErrorMessage("한글은 입력할 수 없습니다.");
+        } else {
+          setErrorMessage(''); //에러메시지 초기화
+        }
+        setValue(userValue.toUpperCase()); //대문자로 만들기
+      }
+
+      function handleFormSubmit(e) {
+        e.preventDefault();
+
+        setErrorMessage(''); //초기화 이렇게 해도 됨
+        if (value === '') {
+          setErrorMessage('빈 값으로 만들 수 없습니다.');
+          return;
+        }
+
+        updateMaincat();
+      }
+
+      return (
+        <form onSubmit={handleFormSubmit}>
+          <input type="text" name="name" placeholder="영어 대사를 입력해주세요"
+            value={value}
+            onChange={handleInputChange} />
+          <button type="submit">생성</button>
+          <p style={{ color: 'red' }}>{errorMessage}</p>
+        </form>
+      )
+    }
+
+    function CatItem(props) {
+      return (
+        <li>
+          <img src={props.img} style={{
+            width: "150px"
+          }} />
+        </li>
+      )
+    }
+
+    function Favorites({ favorites }) {
+      return (
+        <ul className="favorites">
+          {favorites.map(cat => <CatItem img={cat} key={cat} />
+          )}
+        </ul>
+      )
+    }
+
+    const MainCard = ({ img, onHeartClick }) => {
+
+      return (
+        <div className="main-card">
+          <img src={img} alt="고양이" width="400" />
+          <button onClick={onHeartClick}>🤍</button>
+        </div>
+      )
+    }
+
+    const App = () => {
+      const CAT1 = "https://cataas.com/cat/HSENVDU4ZMqy7KQ0/says/react";
+      const CAT2 = "https://cataas.com/cat/BxqL2EjFmtxDkAm2/says/inflearn";
+      const CAT3 = "https://cataas.com/cat/18MD6byVC1yKGpXp/says/JavaScript";
+
+      const [counter, setCounter] = React.useState(
+        jsonLocalStorage.getItem("counter")); //로컬스토리지에 저장된 카운터 불러오기, String -> 숫자로 변환해주기
+
+      const [mainCat, setMainCat] = React.useState(CAT1);
+      const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem("favorites") || []
+      ); //null값이면 빈배열로 해라
+
+      function updateMaincat() {
+        setMainCat(CAT2);
+        const nextCounter = counter + 1;
+        setCounter(nextCounter);
+        jsonLocalStorage.setItem('counter', nextCounter);
+
+      }
+
+      function handleHeartClick() {
+        const nextFavorites = [...favorites, mainCat]; //favorites 기존 배열에 CAT3 추가
+        setFavorites(nextFavorites);
+        jsonLocalStorage.setItem('favorites', nextFavorites);
+      }
+
+      return (
+        <div>
+          <Title>{counter}번째 야옹이 가라사대</Title>
+          <Form updateMaincat={updateMaincat} />
+          <MainCard img={mainCat} onHeartClick={handleHeartClick} />
+          <Favorites favorites={favorites} />
+        </div>
+      )
+    };
+
+    const 여기다가그려 = document.querySelector("#app");
+    ReactDOM.render(<App />, 여기다가그려);
+
+  </script>
+</body>
+
+</html>
