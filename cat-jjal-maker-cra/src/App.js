@@ -147,7 +147,7 @@ const App = () => {
 
   return (
     <div>
-      <Title>{counterTitle} 야옹이 가라사대</Title>
+      <Title>{counterTitle} 야옹이 가라사대 배포 수정 테스트</Title>
       <Form updateMaincat={updateMaincat} />
       <MainCard img={mainCat} onHeartClick={handleHeartClick} alreadayFavorite={alreadayFavorite} />
       <Favorites favorites={favorites} />
