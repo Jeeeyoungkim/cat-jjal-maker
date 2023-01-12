@@ -25,8 +25,6 @@
     flex-wrap: wrap;
     gap: 15px;
   }
-
-  .favorites img {}
 </style>
 
 <body>
@@ -46,7 +44,12 @@
       },
     };
 
-    console.log("야옹");
+    const fetchCat = async (text) => {
+      const OPEN_API_DOMAIN = "https://cataas.com";
+      const response = await fetch(`${OPEN_API_DOMAIN}/cat/says/${text}?json=true`);
+      const responseJson = await response.json();
+      return `${OPEN_API_DOMAIN}/${responseJson.url}`;
+    };
 
     const Title = (props) => {
       return (
@@ -80,7 +83,7 @@
           return;
         }
 
-        updateMaincat();
+        updateMaincat(value);
       }
 
       return (
@@ -105,6 +108,10 @@
     }
 
     function Favorites({ favorites }) {
+      if (favorites.length === 0) {
+        return <div>사진 위 하트를 눌러 고양이 사진을 저장해봐요!</div>;
+      }
+
       return (
         <ul className="favorites">
           {favorites.map(cat => <CatItem img={cat} key={cat} />
@@ -113,12 +120,13 @@
       )
     }
 
-    const MainCard = ({ img, onHeartClick }) => {
+    const MainCard = ({ img, onHeartClick, alreadayFavorite }) => {
+      const heartIcon = alreadayFavorite ? "💖" : "🤍";
 
       return (
         <div className="main-card">
           <img src={img} alt="고양이" width="400" />
-          <button onClick={onHeartClick}>🤍</button>
+          <button onClick={onHeartClick}>{heartIcon}</button>
         </div>
       )
     }
@@ -128,19 +136,42 @@
       const CAT2 = "https://cataas.com/cat/BxqL2EjFmtxDkAm2/says/inflearn";
       const CAT3 = "https://cataas.com/cat/18MD6byVC1yKGpXp/says/JavaScript";
 
-      const [counter, setCounter] = React.useState(
-        jsonLocalStorage.getItem("counter")); //로컬스토리지에 저장된 카운터 불러오기, String -> 숫자로 변환해주기
+
+      const [counter, setCounter] = React.useState(() => {
+        return jsonLocalStorage.getItem("counter")
+      }); //로컬스토리지에 저장된 카운터 불러오기,
 
       const [mainCat, setMainCat] = React.useState(CAT1);
-      const [favorites, setFavorites] = React.useState(jsonLocalStorage.getItem("favorites") || []
-      ); //null값이면 빈배열로 해라
 
-      function updateMaincat() {
-        setMainCat(CAT2);
-        const nextCounter = counter + 1;
-        setCounter(nextCounter);
-        jsonLocalStorage.setItem('counter', nextCounter);
+      const [favorites, setFavorites] = React.useState(() => {
+        return jsonLocalStorage.getItem("favorites") || []
+      }); //null값이면 빈배열로 해라
 
+      const alreadayFavorite = favorites.includes(mainCat);
+
+      async function setInitialCat() {
+        const newCat = await fetchCat('firstcat');
+        console.log(newCat);
+        setMainCat(newCat);
+      }
+
+      //setInitialCat(); -> 앱이 만들어 졌을때 한번만 불리는게 아니라 계에에속 불리고 있다....
+
+      React.useEffect(() => {
+        setInitialCat();
+      }, []);
+
+      async function updateMaincat(value) {
+        const newCat = await fetchCat(value);
+
+        setMainCat(newCat);
+
+        setCounter((prev) => {
+          const nextCounter = prev + 1;
+          jsonLocalStorage.setItem('counter', nextCounter);
+          return nextCounter;
+        })
+        //setState에 변수 대신 함수를 넣으면 지연초기화가 된담. 
       }
 
       function handleHeartClick() {
@@ -149,11 +180,13 @@
         jsonLocalStorage.setItem('favorites', nextFavorites);
       }
 
+      const counterTitle = counter == null ? "" : counter + "번째 ";
+
       return (
         <div>
-          <Title>{counter}번째 야옹이 가라사대</Title>
+          <Title>{counterTitle} 야옹이 가라사대</Title>
           <Form updateMaincat={updateMaincat} />
-          <MainCard img={mainCat} onHeartClick={handleHeartClick} />
+          <MainCard img={mainCat} onHeartClick={handleHeartClick} alreadayFavorite={alreadayFavorite} />
           <Favorites favorites={favorites} />
         </div>
       )
